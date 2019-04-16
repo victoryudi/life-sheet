@@ -210,18 +210,18 @@ function populateType(type, mappedInfo) {
   var sortedWhys = mappedInfo["whys"];
   var lastIndex = sortedActivities.length - 1;
 
-  var first = "A";
-  var second = "B";
-  var last = "C";
+  var first = "B";
+  var second = "C";
+  var last = "D";
 
   if (type == "professional") {
-    first = "E";
-    second = "F";
-    last = "G";
+    first = "G";
+    second = "H";
+    last = "I";
   } else if (type == "logosophy") {
-    first = "I";
-    second = "J";
-    last = "K";
+    first = "L";
+    second = "M";
+    last = "N";
   }
 
   for (var i = 0; i <= lastIndex; i++) {
