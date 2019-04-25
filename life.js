@@ -78,6 +78,8 @@ function resetSheet() {
   resetValueForRange(dashboard.getRange("A13:N"));
   resetValueForRange(dashboard.getRange("L2"));
   resetValueForRange(dashboard.getRange("Q2"));
+  var scoreSum = getScoreSum();
+  updateScoreSum(scoreSum);
 
   tasks = getCurrentSheet().getSheetByName("tasks");
   resetValueForRange(tasks.getRange("A2:G"));
@@ -105,6 +107,7 @@ function populateDataSheet(data) {
   dataSheet = getCurrentSheet().getSheetByName("data");
 
   var row = getLastPopulatedRow(dataSheet) + 1;
+  var dateColumn = "A";
   var leftColumn = "B";
   var doneColumn = "C";
   var percentageColumn = "D";
@@ -117,6 +120,9 @@ function populateDataSheet(data) {
   var notes = data["notes"];
   var tasksSum = data["tasksSum"];
 
+  dataSheet
+    .getRange(dateColumn + row)
+    .setValue(Utilities.formatDate(new Date(), "GMT+1", "dd/MM/yyyy"));
   dataSheet.getRange(leftColumn + row).setValue(tasksLeft);
   dataSheet.getRange(doneColumn + row).setValue(done);
   dataSheet.getRange(percentageColumn + row).setValue(percentage);
