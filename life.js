@@ -1,8 +1,13 @@
 function onEdit(e) {
-  if (shouldUpdateDashboard()) {
+  if (shouldResetDashboard()) {
     var data = getTodaysData();
     populateDataSheet(data);
     resetSheet();
+  }
+
+  if (shouldUpdateScoreSum()) {
+    var scoreSum = getScoreSum();
+    updateScoreSum(scoreSum);
   }
 
   if (getCurrentSheet().getSheetName() == "tasks") {
@@ -16,11 +21,63 @@ function onEdit(e) {
   }
 }
 
+function updateScoreSum(scoreSum) {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  sheet.getRange("G8").setValue(scoreSum);
+}
+
+function getScoreSum() {
+  var scoreSum = 0;
+
+  scoreSum += getScoreSumForColumns("A", "E");
+  scoreSum += getScoreSumForColumns("F", "J");
+  scoreSum += getScoreSumForColumns("K", "O");
+
+  return scoreSum;
+}
+
+function getScoreSumForColumns(checkColumn, scoreColumn) {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  var avals = sheet.getRange(scoreColumn + "13:" + scoreColumn).getValues();
+  var alast = avals.filter(String).length;
+  var scoreSum = 0;
+
+  if (alast > 0) {
+    for (var i = 0; i <= alast; i++) {
+      if (getStringForPos(checkColumn, i + 13) == "✅") {
+        var scoreToSum = parseInt(
+          sheet.getRange(scoreColumn + String(i + 13)).getValue()
+        );
+
+        if (scoreToSum === scoreToSum) {
+          scoreSum += scoreToSum;
+        }
+      }
+    }
+  }
+
+  return scoreSum;
+}
+
+function shouldUpdateScoreSum() {
+  if (getCurrentSheet().getSheetName() == "dashboard") {
+    var currentCell = getCurrentSheet().getActiveCell();
+    var value = String(currentCell.getValue());
+    var column = currentCell.getColumn();
+
+    if (column == "1" || column == "6" || column == "11") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function resetSheet() {
   dashboard = getCurrentSheet().getSheetByName("dashboard");
   resetValueForRange(dashboard.getRange("A13:N"));
   resetValueForRange(dashboard.getRange("L2"));
-  resetValueForRange(dashboard.getRange("P2"));
+  resetValueForRange(dashboard.getRange("Q2"));
 
   tasks = getCurrentSheet().getSheetByName("tasks");
   resetValueForRange(tasks.getRange("A2:G"));
@@ -30,11 +87,11 @@ function resetValueForRange(range) {
   range.setValue(null);
 }
 
-function shouldUpdateDashboard() {
+function shouldResetDashboard() {
   if (getCurrentSheet().getSheetName() == "dashboard") {
     if (
       getCurrentSheet()
-        .getRange("P2")
+        .getRange("Q2")
         .getValue() == "✅"
     ) {
       return true;
@@ -176,15 +233,16 @@ function getMappedInfoForType(type) {
     }
   }
 
-  return getMappedInfo(sortedActivities, sortedHows, sortedWhys);
+  return getMappedInfo(sortedActivities, sortedHows, sortedWhys, scores);
 }
 
-function getMappedInfo(activities, hows, whys) {
+function getMappedInfo(activities, hows, whys, scores) {
   var info = {};
 
   info["activities"] = activities;
   info["hows"] = hows;
   info["whys"] = whys;
+  info["scores"] = scores;
 
   return info;
 }
@@ -208,20 +266,24 @@ function populateType(type, mappedInfo) {
   var sortedActivities = mappedInfo["activities"];
   var sortedHows = mappedInfo["hows"];
   var sortedWhys = mappedInfo["whys"];
+  var sortedScores = mappedInfo["scores"];
   var lastIndex = sortedActivities.length - 1;
 
   var first = "B";
   var second = "C";
-  var last = "D";
+  var third = "D";
+  var last = "E";
 
   if (type == "professional") {
     first = "G";
     second = "H";
-    last = "I";
+    third = "I";
+    last = "J";
   } else if (type == "logosophy") {
     first = "L";
     second = "M";
-    last = "N";
+    third = "N";
+    last = "O";
   }
 
   for (var i = 0; i <= lastIndex; i++) {
@@ -229,6 +291,7 @@ function populateType(type, mappedInfo) {
     var activity = sortedActivities[i];
     var how = sortedHows[i];
     var why = sortedWhys[i];
+    var score = sortedScores;
 
     var bgRange = first + row + ":" + last + row;
     if (activity == "MISSING") {
@@ -239,7 +302,8 @@ function populateType(type, mappedInfo) {
 
     rankSheet.getRange(first + row).setValue(activity);
     rankSheet.getRange(second + row).setValue(why);
-    rankSheet.getRange(last + row).setValue(how);
+    rankSheet.getRange(third + row).setValue(how);
+    rankSheet.getRange(last + row).setValue(score);
   }
 }
 
