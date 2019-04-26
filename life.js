@@ -1,4 +1,9 @@
 function onEdit(e) {
+  if (shouldUpdateFinance()) {
+    addNewExpense();
+    updateDailyExpense();
+  }
+
   if (shouldResetDashboard()) {
     var data = getTodaysData();
     populateDataSheet(data);
@@ -19,6 +24,59 @@ function onEdit(e) {
       populateType(type, info);
     }
   }
+}
+
+function getTodaysDate() {
+  return Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+}
+
+function getDailyExpensesSum() {
+  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var row = getLastPopulatedRow(financeSheet);
+  var sum = 0;
+
+  for (var i = 0; i < row; i++) {
+    var currentRow = i + 2;
+    var date = getStringOnSheetForPos(financeSheet, "A", currentRow);
+    if (date == String(getTodaysDate())) {
+      sum += financeSheet.getRange("C" + currentRow).getValue();
+    }
+  }
+
+  return sum;
+}
+
+function updateDailyExpense() {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  resetValueForRange(sheet.getRange("H5:I5"));
+  sheet.getRange("H2").setValue(getDailyExpensesSum());
+}
+
+function addNewExpense() {
+  var kind = getStringForPos("H", 5);
+  var value = getStringForPos("I", 5);
+  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var row = getLastPopulatedRow(financeSheet) + 1;
+  var dateColumn = "A";
+  var kindColumn = "B";
+  var valueColumn = "C";
+
+  financeSheet.getRange(dateColumn + row).setValue(getTodaysDate());
+  financeSheet.getRange(kindColumn + row).setValue(kind);
+  financeSheet.getRange(valueColumn + row).setValue(value);
+}
+
+function checkForValidNumber(value) {
+  return !isNaN(value) && value > 0;
+}
+
+function shouldUpdateFinance() {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  return (
+    getCurrentSheet().getSheetName() == "dashboard" &&
+    getStringForPos("H", 5) !== "" &&
+    checkForValidNumber(getStringForPos("I", 5))
+  );
 }
 
 function updateScoreSum(scoreSum) {
@@ -76,6 +134,7 @@ function shouldUpdateScoreSum() {
 function resetSheet() {
   dashboard = getCurrentSheet().getSheetByName("dashboard");
   resetValueForRange(dashboard.getRange("A13:N"));
+  resetValueForRange(dashboard.getRange("H2:I5"));
   resetValueForRange(dashboard.getRange("L2"));
   resetValueForRange(dashboard.getRange("Q2"));
   var scoreSum = getScoreSum();
@@ -120,9 +179,7 @@ function populateDataSheet(data) {
   var notes = data["notes"];
   var tasksSum = data["tasksSum"];
 
-  dataSheet
-    .getRange(dateColumn + row)
-    .setValue(Utilities.formatDate(new Date(), "GMT+1", "dd/MM/yyyy"));
+  dataSheet.getRange(dateColumn + row).setValue(getTodaysDate());
   dataSheet.getRange(leftColumn + row).setValue(tasksLeft);
   dataSheet.getRange(doneColumn + row).setValue(done);
   dataSheet.getRange(percentageColumn + row).setValue(percentage);
