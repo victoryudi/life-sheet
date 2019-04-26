@@ -26,8 +26,37 @@ function onEdit(e) {
   }
 }
 
-function getTodaysDate() {
-  return Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+// MODULES
+
+// Finance
+
+function shouldUpdateFinance() {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  return (
+    getCurrentSheet().getSheetName() == "dashboard" &&
+    getStringForPos("H", 5) !== "" &&
+    checkForValidNumber(getStringForPos("I", 5))
+  );
+}
+
+function addNewExpense() {
+  var kind = getStringForPos("H", 5);
+  var value = getStringForPos("I", 5);
+  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var row = getLastPopulatedRow(financeSheet) + 1;
+  var dateColumn = "A";
+  var kindColumn = "B";
+  var valueColumn = "C";
+
+  financeSheet.getRange(dateColumn + row).setValue(getTodaysDate());
+  financeSheet.getRange(kindColumn + row).setValue(kind);
+  financeSheet.getRange(valueColumn + row).setValue(value);
+}
+
+function updateDailyExpense() {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  resetValueForRange(sheet.getRange("H5:I5"));
+  sheet.getRange("H2").setValue(getDailyExpensesSum());
 }
 
 function getDailyExpensesSum() {
@@ -46,52 +75,20 @@ function getDailyExpensesSum() {
   return sum;
 }
 
-function updateDailyExpense() {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  resetValueForRange(sheet.getRange("H5:I5"));
-  sheet.getRange("H2").setValue(getDailyExpensesSum());
-}
+// Score
 
-function addNewExpense() {
-  var kind = getStringForPos("H", 5);
-  var value = getStringForPos("I", 5);
-  var financeSheet = getCurrentSheet().getSheetByName("finance");
-  var row = getLastPopulatedRow(financeSheet) + 1;
-  var dateColumn = "A";
-  var kindColumn = "B";
-  var valueColumn = "C";
+function shouldUpdateScoreSum() {
+  if (getCurrentSheet().getSheetName() == "dashboard") {
+    var currentCell = getCurrentSheet().getActiveCell();
+    var value = String(currentCell.getValue());
+    var column = currentCell.getColumn();
 
-  financeSheet.getRange(dateColumn + row).setValue(getTodaysDate());
-  financeSheet.getRange(kindColumn + row).setValue(kind);
-  financeSheet.getRange(valueColumn + row).setValue(value);
-}
+    if (column == "1" || column == "6" || column == "11") {
+      return true;
+    }
+  }
 
-function checkForValidNumber(value) {
-  return !isNaN(value) && value > 0;
-}
-
-function shouldUpdateFinance() {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  return (
-    getCurrentSheet().getSheetName() == "dashboard" &&
-    getStringForPos("H", 5) !== "" &&
-    checkForValidNumber(getStringForPos("I", 5))
-  );
-}
-
-function updateScoreSum(scoreSum) {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  sheet.getRange("G8").setValue(scoreSum);
-}
-
-function getScoreSum() {
-  var scoreSum = 0;
-
-  scoreSum += getScoreSumForColumns("A", "E");
-  scoreSum += getScoreSumForColumns("F", "J");
-  scoreSum += getScoreSumForColumns("K", "O");
-
-  return scoreSum;
+  return false;
 }
 
 function getScoreSumForColumns(checkColumn, scoreColumn) {
@@ -117,36 +114,22 @@ function getScoreSumForColumns(checkColumn, scoreColumn) {
   return scoreSum;
 }
 
-function shouldUpdateScoreSum() {
-  if (getCurrentSheet().getSheetName() == "dashboard") {
-    var currentCell = getCurrentSheet().getActiveCell();
-    var value = String(currentCell.getValue());
-    var column = currentCell.getColumn();
+function getScoreSum() {
+  var scoreSum = 0;
 
-    if (column == "1" || column == "6" || column == "11") {
-      return true;
-    }
-  }
+  scoreSum += getScoreSumForColumns("A", "E");
+  scoreSum += getScoreSumForColumns("F", "J");
+  scoreSum += getScoreSumForColumns("K", "O");
 
-  return false;
+  return scoreSum;
 }
 
-function resetSheet() {
-  dashboard = getCurrentSheet().getSheetByName("dashboard");
-  resetValueForRange(dashboard.getRange("A13:N"));
-  resetValueForRange(dashboard.getRange("H2:I5"));
-  resetValueForRange(dashboard.getRange("L2"));
-  resetValueForRange(dashboard.getRange("Q2"));
-  var scoreSum = getScoreSum();
-  updateScoreSum(scoreSum);
-
-  tasks = getCurrentSheet().getSheetByName("tasks");
-  resetValueForRange(tasks.getRange("A2:G"));
+function updateScoreSum(scoreSum) {
+  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  sheet.getRange("G8").setValue(scoreSum);
 }
 
-function resetValueForRange(range) {
-  range.setValue(null);
-}
+// Reset
 
 function shouldResetDashboard() {
   if (getCurrentSheet().getSheetName() == "dashboard") {
@@ -187,12 +170,6 @@ function populateDataSheet(data) {
   dataSheet.getRange(tasksSumColumn + row).setValue(tasksSum);
 }
 
-function getLastPopulatedRow(sheet) {
-  var avals = sheet.getRange("A1:A").getValues();
-  var alast = avals.filter(String).length;
-  return alast;
-}
-
 function getTodaysData() {
   dashboardSheet = getCurrentSheet().getSheetByName("dashboard");
 
@@ -226,6 +203,21 @@ function getTodaysData() {
 
   return getMappedData(tasksLeft, doneTasks, percentage, notes, tasksSum);
 }
+
+function resetSheet() {
+  dashboard = getCurrentSheet().getSheetByName("dashboard");
+  resetValueForRange(dashboard.getRange("A13:N"));
+  resetValueForRange(dashboard.getRange("H2:I5"));
+  resetValueForRange(dashboard.getRange("L2"));
+  resetValueForRange(dashboard.getRange("Q2"));
+  var scoreSum = getScoreSum();
+  updateScoreSum(scoreSum);
+
+  tasks = getCurrentSheet().getSheetByName("tasks");
+  resetValueForRange(tasks.getRange("A2:G"));
+}
+
+// Populate
 
 function getMappedData(left, done, percentage, notes, tasksSum) {
   var data = {};
@@ -370,6 +362,8 @@ function populateType(type, mappedInfo) {
   }
 }
 
+// Utils
+
 function getStringOnSheetForPos(sheet, column, row) {
   return String(sheet.getRange(column + row).getValue());
 }
@@ -384,4 +378,22 @@ function getStringForPos(column, row) {
 
 function getCurrentSheet() {
   return SpreadsheetApp.getActive();
+}
+
+function getTodaysDate() {
+  return Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy");
+}
+
+function getLastPopulatedRow(sheet) {
+  var avals = sheet.getRange("A1:A").getValues();
+  var alast = avals.filter(String).length;
+  return alast;
+}
+
+function checkForValidNumber(value) {
+  return !isNaN(value) && value > 0;
+}
+
+function resetValueForRange(range) {
+  range.setValue(null);
 }
