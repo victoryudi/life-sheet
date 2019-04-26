@@ -64,8 +64,8 @@ function getDailyExpensesSum() {
   var row = getLastPopulatedRow(financeSheet);
   var sum = 0;
 
-  for (var i = 0; i < row; i++) {
-    var currentRow = i + 2;
+  for (var i = 0; i < row - 1; i++) {
+    var currentRow = i + 3;
     var date = getStringOnSheetForPos(financeSheet, "A", currentRow);
     if (date == String(getTodaysDate())) {
       sum += financeSheet.getRange("C" + currentRow).getValue();
@@ -73,6 +73,27 @@ function getDailyExpensesSum() {
   }
 
   return sum;
+}
+
+function calculateDailyGoal() {
+  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var monthlyGoal = financeSheet.getRange("B1").getValue();
+  var amountSpent = 0;
+  var lastRow = getLastPopulatedRow(financeSheet);
+
+  for (var i = 0; i < lastRow - 1; i++) {
+    var currentRow = i + 3;
+    var rowsDate = getStringOnSheetForPos(financeSheet, "A", currentRow);
+    if (checkForCurrentMonth(rowsDate)) {
+      amountSpent += financeSheet.getRange("C" + currentRow).getValue();
+    }
+  }
+
+  var remainingValue = monthlyGoal - amountSpent;
+  var today = parseInt(String(getTodaysDate()).substring(0, 2));
+  var remainingDays = 31 - parseInt(String(getTodaysDate()).substring(0, 2));
+
+  return remainingValue / remainingDays;
 }
 
 // Score
@@ -210,6 +231,11 @@ function resetSheet() {
   resetValueForRange(dashboard.getRange("H2:I5"));
   resetValueForRange(dashboard.getRange("L2"));
   resetValueForRange(dashboard.getRange("Q2"));
+
+  var goal = calculateDailyGoal();
+  dashboard.getRange("H4").setValue(goal);
+  dashboard.getRange("H2").setValue(0);
+
   var scoreSum = getScoreSum();
   updateScoreSum(scoreSum);
 
@@ -396,4 +422,11 @@ function checkForValidNumber(value) {
 
 function resetValueForRange(range) {
   range.setValue(null);
+}
+
+function checkForCurrentMonth(date) {
+  var month = parseInt(date.substring(3, 5));
+  var currentMonth = parseInt(String(getTodaysDate()).substring(3, 5));
+
+  return month == currentMonth;
 }
