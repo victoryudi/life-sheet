@@ -1,3 +1,78 @@
+// VARS
+
+var tasksSheetName = "tasks";
+var dashboardSheetName = "dashboard";
+var financeSheetName = "finance";
+var dataSheetName = "data";
+
+var alertColor = "#FF5950";
+
+var professionalType = "professional";
+var personalType = "personal";
+var logosophyType = "logosophy";
+
+var activitiesKey = "activities";
+var howKey = "hows";
+var whyKey = "whys";
+var scoresKey = "scores";
+var leftKey = "left";
+var doneKey = "done";
+var percentageKey = "percentage";
+var notesKey = "notes";
+var tasksSumKey = "tasksSum";
+
+var missing = "MISSING";
+var checkEmoji = "✅";
+
+// Columns and Rows
+// Dashboard
+var personalTaskStatusIndex = "1";
+var personalTitleColumn = "B";
+var personalWhyColumn = "C";
+var personalHowColumn = "D";
+var personalScoreColumn = "E";
+var professionalTaskStatusIndex = "6";
+var professionalTitleColumn = "G";
+var professionalWhyColumn = "H";
+var professionalHowColumn = "I";
+var professionalScoreColumn = "J";
+var logosophyTaskStatusIndex = "11";
+var logosophyTitleColumn = "L";
+var logosophyWhyColumn = "M";
+var logosophyHowColumn = "N";
+var logosophyScoreColumn = "O";
+var tasksLeftColumn = "B";
+var doneColumn = "G";
+var percentageColumn = "L";
+var notesColumn = "L";
+var notesRow = "2";
+var tasksDataRow = "8";
+var newExpenseTypeCell = "H5";
+var newExpenseValueCell = "I5";
+var spentValueCell = "H2";
+var goalValueCell = "H4";
+var notesCell = "L2";
+var pointsDoneCell = "G8";
+var refreshCheckboxCell = "Q2";
+var tasksFirstRow = 13;
+
+//Data
+var dateColumn = "A";
+var leftColumn = "B";
+var doneColumn = "C";
+var percentageColumn = "D";
+var notesColumn = "E";
+var tasksSumColumn = "F";
+
+//Tasks
+var typeColumn = "A";
+var activityColumn = "B";
+var howColumn = "G";
+var whyColumn = "F";
+var scoreColumn = "H";
+
+// TRIGGERS
+
 function onEdit(e) {
   if (shouldUpdateFinance()) {
     addNewExpense();
@@ -15,8 +90,8 @@ function onEdit(e) {
     updateScoreSum(scoreSum);
   }
 
-  if (getCurrentSheet().getSheetName() == "tasks") {
-    var types = ["personal", "professional", "logosophy"];
+  if (getCurrentSheet().getSheetName() == tasksSheetName) {
+    var types = [personalType, professionalType, logosophyType];
 
     for (var i = 0; i < types.length; i++) {
       var type = types[i];
@@ -31,18 +106,18 @@ function onEdit(e) {
 // Finance
 
 function shouldUpdateFinance() {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
+  var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
   return (
-    getCurrentSheet().getSheetName() == "dashboard" &&
-    getStringForPos("H", 5) !== "" &&
-    checkForValidNumber(getStringForPos("I", 5))
+    getCurrentSheet().getSheetName() == dashboardSheetName &&
+    getStringForPos(newExpenseTypeCell) !== "" &&
+    checkForValidNumber(getStringForPos(newExpenseValueCell))
   );
 }
 
 function addNewExpense() {
   var kind = getStringForPos("H", 5);
   var value = getStringForPos("I", 5);
-  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var financeSheet = getCurrentSheet().getSheetByName(financeSheetName);
   var row = getLastPopulatedRow(financeSheet) + 1;
   var dateColumn = "A";
   var kindColumn = "B";
@@ -54,13 +129,15 @@ function addNewExpense() {
 }
 
 function updateDailyExpense() {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  resetValueForRange(sheet.getRange("H5:I5"));
-  sheet.getRange("H2").setValue(getDailyExpensesSum());
+  var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  resetValueForRange(
+    sheet.getRange(newExpenseTypeCell + ":" + newExpenseValueCell)
+  );
+  sheet.getRange(spentValueCell).setValue(getDailyExpensesSum());
 }
 
 function getDailyExpensesSum() {
-  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var financeSheet = getCurrentSheet().getSheetByName(financeSheetName);
   var row = getLastPopulatedRow(financeSheet);
   var sum = 0;
 
@@ -76,7 +153,7 @@ function getDailyExpensesSum() {
 }
 
 function calculateDailyGoal() {
-  var financeSheet = getCurrentSheet().getSheetByName("finance");
+  var financeSheet = getCurrentSheet().getSheetByName(financeSheetName);
   var monthlyGoal = financeSheet.getRange("B1").getValue();
   var amountSpent = 0;
   var lastRow = getLastPopulatedRow(financeSheet);
@@ -99,12 +176,16 @@ function calculateDailyGoal() {
 // Score
 
 function shouldUpdateScoreSum() {
-  if (getCurrentSheet().getSheetName() == "dashboard") {
+  if (getCurrentSheet().getSheetName() == dashboardSheetName) {
     var currentCell = getCurrentSheet().getActiveCell();
     var value = String(currentCell.getValue());
     var column = currentCell.getColumn();
 
-    if (column == "1" || column == "6" || column == "11") {
+    if (
+      column == personalTaskStatusIndex ||
+      column == professionalTaskStatusIndex ||
+      column == logosophyTaskStatusIndex
+    ) {
       return true;
     }
   }
@@ -113,16 +194,18 @@ function shouldUpdateScoreSum() {
 }
 
 function getScoreSumForColumns(checkColumn, scoreColumn) {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  var avals = sheet.getRange(scoreColumn + "13:" + scoreColumn).getValues();
+  var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  var avals = sheet
+    .getRange(scoreColumn + tasksFirstRow + ":" + scoreColumn)
+    .getValues();
   var alast = avals.filter(String).length;
   var scoreSum = 0;
 
   if (alast > 0) {
     for (var i = 0; i <= alast; i++) {
-      if (getStringForPos(checkColumn, i + 13) == "✅") {
+      if (getStringForPos(checkColumn, i + tasksFirstRow) == checkEmoji) {
         var scoreToSum = parseInt(
-          sheet.getRange(scoreColumn + String(i + 13)).getValue()
+          sheet.getRange(scoreColumn + String(i + tasksFirstRow)).getValue()
         );
 
         if (scoreToSum === scoreToSum) {
@@ -146,18 +229,18 @@ function getScoreSum() {
 }
 
 function updateScoreSum(scoreSum) {
-  var sheet = getCurrentSheet().getSheetByName("dashboard");
-  sheet.getRange("G8").setValue(scoreSum);
+  var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  sheet.getRange(pointsDoneCell).setValue(scoreSum);
 }
 
 // Reset
 
 function shouldResetDashboard() {
-  if (getCurrentSheet().getSheetName() == "dashboard") {
+  if (getCurrentSheet().getSheetName() == dashboardSheetName) {
     if (
       getCurrentSheet()
-        .getRange("Q2")
-        .getValue() == "✅"
+        .getRange(refreshCheckboxCell)
+        .getValue() == checkEmoji
     ) {
       return true;
     }
@@ -167,21 +250,15 @@ function shouldResetDashboard() {
 }
 
 function populateDataSheet(data) {
-  dataSheet = getCurrentSheet().getSheetByName("data");
+  dataSheet = getCurrentSheet().getSheetByName(dataSheetName);
 
   var row = getLastPopulatedRow(dataSheet) + 1;
-  var dateColumn = "A";
-  var leftColumn = "B";
-  var doneColumn = "C";
-  var percentageColumn = "D";
-  var notesColumn = "E";
-  var tasksSumColumn = "F";
 
-  var tasksLeft = data["left"];
-  var done = data["done"];
-  var percentage = data["percentage"];
-  var notes = data["notes"];
-  var tasksSum = data["tasksSum"];
+  var tasksLeft = data[leftKey];
+  var done = data[doneKey];
+  var percentage = data[percentageKey];
+  var notes = data[notesKey];
+  var tasksSum = data[tasksSumKey];
 
   dataSheet.getRange(dateColumn + row).setValue(getTodaysDate());
   dataSheet.getRange(leftColumn + row).setValue(tasksLeft);
@@ -192,14 +269,7 @@ function populateDataSheet(data) {
 }
 
 function getTodaysData() {
-  dashboardSheet = getCurrentSheet().getSheetByName("dashboard");
-
-  var tasksDataRow = "8";
-  var tasksLeftColumn = "B";
-  var doneColumn = "G";
-  var percentageColumn = "L";
-  var notesColumn = "L";
-  var notesRow = "2";
+  dashboardSheet = getCurrentSheet().getSheetByName(dashboardSheetName);
 
   var tasksLeft = getStringOnSheetForPos(
     dashboardSheet,
@@ -219,27 +289,29 @@ function getTodaysData() {
 
   var notes = getStringOnSheetForPos(dashboardSheet, notesColumn, notesRow);
 
-  var tasksSheet = getCurrentSheet().getSheetByName("tasks");
+  var tasksSheet = getCurrentSheet().getSheetByName(tasksSheetName);
   var tasksSum = String(tasksSheet.getRange("A2:G").getValues());
 
   return getMappedData(tasksLeft, doneTasks, percentage, notes, tasksSum);
 }
 
 function resetSheet() {
-  dashboard = getCurrentSheet().getSheetByName("dashboard");
-  resetValueForRange(dashboard.getRange("A13:N"));
-  resetValueForRange(dashboard.getRange("H2:I5"));
-  resetValueForRange(dashboard.getRange("L2"));
-  resetValueForRange(dashboard.getRange("Q2"));
+  dashboard = getCurrentSheet().getSheetByName(dashboardSheetName);
+  resetValueForRange(dashboard.getRange("A" + tasksFirstRow + ":N"));
+  resetValueForRange(
+    dashboard.getRange(spentValueCell + ":" + newExpenseValueCell)
+  );
+  resetValueForRange(dashboard.getRange(notesCell));
+  resetValueForRange(dashboard.getRange(refreshCheckboxCell));
 
   var goal = calculateDailyGoal();
-  dashboard.getRange("H4").setValue(goal);
-  dashboard.getRange("H2").setValue(0);
+  dashboard.getRange(goalValueCell).setValue(goal);
+  dashboard.getRange(spentValueCell).setValue(0);
 
   var scoreSum = getScoreSum();
   updateScoreSum(scoreSum);
 
-  tasks = getCurrentSheet().getSheetByName("tasks");
+  tasks = getCurrentSheet().getSheetByName(tasksSheetName);
   resetValueForRange(tasks.getRange("A2:G"));
 }
 
@@ -248,22 +320,16 @@ function resetSheet() {
 function getMappedData(left, done, percentage, notes, tasksSum) {
   var data = {};
 
-  data["left"] = left;
-  data["done"] = done;
-  data["percentage"] = percentage;
-  data["notes"] = notes;
-  data["tasksSum"] = tasksSum;
+  data[leftKey] = left;
+  data[doneKey] = done;
+  data[percentageKey] = percentage;
+  data[notesKey] = notes;
+  data[tasksSumKey] = tasksSum;
 
   return data;
 }
 
 function getMappedInfoForType(type) {
-  var activityColumn = "B";
-  var howColumn = "G";
-  var whyColumn = "F";
-  var scoreColumn = "H";
-  var typeColumn = "A";
-
   var lastIndex = getCurrentSheet().getLastRow() - 2;
   var arraySize = 0;
   var scores = new Array();
@@ -303,7 +369,7 @@ function getMappedInfoForType(type) {
     usedIndexes.push(index);
 
     if (activity != "" && (how == "" || why == "")) {
-      var missing = "MISSING";
+      var missing = missing;
       sortedActivities[index] = missing;
       sortedHows[index] = missing;
       sortedWhys[index] = missing;
@@ -320,10 +386,10 @@ function getMappedInfoForType(type) {
 function getMappedInfo(activities, hows, whys, scores) {
   var info = {};
 
-  info["activities"] = activities;
-  info["hows"] = hows;
-  info["whys"] = whys;
-  info["scores"] = scores;
+  info[activitiesKey] = activities;
+  info[howKey] = hows;
+  info[whyKey] = whys;
+  info[scoresKey] = scores;
 
   return info;
 }
@@ -342,29 +408,28 @@ function getIndexForScore(scores, score, usedIndexes, maxIndex) {
 }
 
 function populateType(type, mappedInfo) {
-  var missingBgColor = "#FF5950";
-  var rankSheet = getCurrentSheet().getSheetByName("dashboard");
-  var sortedActivities = mappedInfo["activities"];
-  var sortedHows = mappedInfo["hows"];
-  var sortedWhys = mappedInfo["whys"];
-  var sortedScores = mappedInfo["scores"];
+  var rankSheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  var sortedActivities = mappedInfo[activitiesKey];
+  var sortedHows = mappedInfo[howKey];
+  var sortedWhys = mappedInfo[whyKey];
+  var sortedScores = mappedInfo[scoresKey];
   var lastIndex = sortedActivities.length - 1;
 
-  var first = "B";
-  var second = "C";
-  var third = "D";
-  var last = "E";
+  var first = personalTitleColumn;
+  var second = personalWhyColumn;
+  var third = personalHowColumn;
+  var last = personalScoreColumn;
 
-  if (type == "professional") {
-    first = "G";
-    second = "H";
-    third = "I";
-    last = "J";
-  } else if (type == "logosophy") {
-    first = "L";
-    second = "M";
-    third = "N";
-    last = "O";
+  if (type == professionalType) {
+    first = professionalTitleColumn;
+    second = professionalWhyColumn;
+    third = professionalHowColumn;
+    last = professionalScoreColumn;
+  } else if (type == logosophyType) {
+    first = logosophyTitleColumn;
+    second = logosophyWhyColumn;
+    third = logosophyHowColumn;
+    last = logosophyScoreColumn;
   }
 
   for (var i = 0; i <= lastIndex; i++) {
@@ -375,8 +440,8 @@ function populateType(type, mappedInfo) {
     var score = sortedScores;
 
     var bgRange = first + row + ":" + last + row;
-    if (activity == "MISSING") {
-      rankSheet.getRange(bgRange).setBackgroundColor(missingBgColor);
+    if (activity == missing) {
+      rankSheet.getRange(bgRange).setBackgroundColor(alertColor);
     } else {
       rankSheet.getRange(bgRange).setBackgroundColor(null);
     }
@@ -388,7 +453,7 @@ function populateType(type, mappedInfo) {
   }
 }
 
-// Utils
+// UTILS
 
 function getStringOnSheetForPos(sheet, column, row) {
   return String(sheet.getRange(column + row).getValue());
