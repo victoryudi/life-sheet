@@ -66,6 +66,8 @@ var tasksLeftColumn = "B";
 var doneColumn = "G";
 var percentageColumn = "L";
 var notesColumn = "L";
+var newExpenseTypeColumn = "H";
+var newExpenseValueColumn = "I";
 var notesRow = "2";
 var tasksDataRow = "8";
 var newExpenseTypeCell = "H5";
@@ -75,6 +77,7 @@ var goalValueCell = "H4";
 var notesCell = "L2";
 var pointsDoneCell = "G8";
 var refreshCheckboxCell = "Q2";
+var newExpenseRow = 5;
 var auxiliarDataRow = 13;
 var tasksFirstRow = 16;
 
@@ -139,8 +142,8 @@ function shouldUpdateFinance() {
 }
 
 function addNewExpense() {
-  var kind = getStringForPos("H", 5);
-  var value = getStringForPos("I", 5);
+  var kind = getStringForPos(newExpenseTypeColumn, newExpenseRow);
+  var value = getStringForPos(newExpenseValueColumn, newExpenseRow);
   var financeSheet = getCurrentSheet().getSheetByName(financeSheetName);
   var row = getLastPopulatedRow(financeSheet) + 1;
   var dateColumn = "A";
