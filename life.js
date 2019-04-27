@@ -4,6 +4,7 @@ var tasksSheetName = "tasks";
 var dashboardSheetName = "dashboard";
 var financeSheetName = "finance";
 var dataSheetName = "data";
+var auxiliarDataSheetName = "auxiliar_data";
 
 var alertColor = "#FF5950";
 
@@ -41,6 +42,26 @@ var logosophyTitleColumn = "L";
 var logosophyWhyColumn = "M";
 var logosophyHowColumn = "N";
 var logosophyScoreColumn = "O";
+var basicsColumnA = "B";
+var basicsColumnB = "C";
+var basicsColumnC = "D";
+var routineColumnA = "G";
+var routineColumnB = "H";
+var routineColumnC = "I";
+var challengesColumnA = "L";
+var challengesColumnB = "M";
+var challengesColumnC = "N";
+var auxiliarDataColumns = [
+  basicsColumnA,
+  basicsColumnB,
+  basicsColumnC,
+  routineColumnA,
+  routineColumnB,
+  routineColumnC,
+  challengesColumnA,
+  challengesColumnB,
+  challengesColumnC
+];
 var tasksLeftColumn = "B";
 var doneColumn = "G";
 var percentageColumn = "L";
@@ -54,7 +75,8 @@ var goalValueCell = "H4";
 var notesCell = "L2";
 var pointsDoneCell = "G8";
 var refreshCheckboxCell = "Q2";
-var tasksFirstRow = 13;
+var auxiliarDataRow = 13;
+var tasksFirstRow = 16;
 
 //Data
 var dateColumn = "A";
@@ -82,6 +104,8 @@ function onEdit(e) {
   if (shouldResetDashboard()) {
     var data = getTodaysData();
     populateDataSheet(data);
+    var auxiliarData = getAuxiliarData();
+    populateAuxiliarDataSheet(auxiliarData);
     resetSheet();
   }
 
@@ -109,8 +133,8 @@ function shouldUpdateFinance() {
   var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
   return (
     getCurrentSheet().getSheetName() == dashboardSheetName &&
-    getStringForPos(newExpenseTypeCell) !== "" &&
-    checkForValidNumber(getStringForPos(newExpenseValueCell))
+    sheet.getRange(newExpenseTypeCell).getValue() !== "" &&
+    checkForValidNumber(sheet.getRange(newExpenseValueCell).getValue())
   );
 }
 
@@ -295,11 +319,68 @@ function getTodaysData() {
   return getMappedData(tasksLeft, doneTasks, percentage, notes, tasksSum);
 }
 
+function populateAuxiliarDataSheet(data) {
+  var sheet = getCurrentSheet().getSheetByName(auxiliarDataSheetName);
+  var row = getLastPopulatedRow(sheet) + 1;
+
+  for (var i = 0; i < auxiliarDataColumns.length; i++) {
+    var key = auxiliarDataColumns[i];
+    var title = data[0][key];
+    var result = data[1][key];
+
+    var titleColumn = (i + 1) * 2;
+    var resultColumn = titleColumn + 1;
+
+    sheet.getRange(row, titleColumn).setValue(title);
+    sheet.getRange(row, resultColumn).setValue(result);
+  }
+
+  sheet.getRange("A" + row).setValue(getTodaysDate());
+}
+
+function getAuxiliarData() {
+  var sheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  var titlesMap = {};
+  var resultsMap = {};
+
+  for (var i = 0; i < auxiliarDataColumns.length; i++) {
+    var column = auxiliarDataColumns[i];
+    var title = getStringOnSheetForPos(sheet, column, auxiliarDataRow - 1);
+    var result = getStringOnSheetForPos(sheet, column, auxiliarDataRow);
+
+    titlesMap[column] = title;
+    resultsMap[column] = result;
+  }
+
+  return [titlesMap, resultsMap];
+}
+
+function getMappedData(left, done, percentage, notes, tasksSum) {
+  var data = {};
+
+  data[leftKey] = left;
+  data[doneKey] = done;
+  data[percentageKey] = percentage;
+  data[notesKey] = notes;
+  data[tasksSumKey] = tasksSum;
+
+  return data;
+}
+
 function resetSheet() {
   dashboard = getCurrentSheet().getSheetByName(dashboardSheetName);
   resetValueForRange(dashboard.getRange("A" + tasksFirstRow + ":N"));
   resetValueForRange(
     dashboard.getRange(spentValueCell + ":" + newExpenseValueCell)
+  );
+  resetValueForRange(
+    dashboard.getRange(
+      basicsColumnA +
+        auxiliarDataRow +
+        ":" +
+        challengesColumnC +
+        auxiliarDataRow
+    )
   );
   resetValueForRange(dashboard.getRange(notesCell));
   resetValueForRange(dashboard.getRange(refreshCheckboxCell));
@@ -316,18 +397,6 @@ function resetSheet() {
 }
 
 // Populate
-
-function getMappedData(left, done, percentage, notes, tasksSum) {
-  var data = {};
-
-  data[leftKey] = left;
-  data[doneKey] = done;
-  data[percentageKey] = percentage;
-  data[notesKey] = notes;
-  data[tasksSumKey] = tasksSum;
-
-  return data;
-}
 
 function getMappedInfoForType(type) {
   var lastIndex = getCurrentSheet().getLastRow() - 2;
@@ -433,7 +502,7 @@ function populateType(type, mappedInfo) {
   }
 
   for (var i = 0; i <= lastIndex; i++) {
-    var row = i + 13;
+    var row = i + tasksFirstRow;
     var activity = sortedActivities[i];
     var how = sortedHows[i];
     var why = sortedWhys[i];
