@@ -82,12 +82,12 @@ var auxiliarDataRow = 13;
 var tasksFirstRow = 16;
 
 //Data
-var dateColumn = "A";
-var leftColumn = "B";
-var doneColumn = "C";
-var percentageColumn = "D";
-var notesColumn = "E";
-var tasksSumColumn = "F";
+var dataDateColumn = "A";
+var dataLeftColumn = "B";
+var dataDoneColumn = "C";
+var dataPercentageColumn = "D";
+var dataNotesColumn = "E";
+var dataTasksSumColumn = "F";
 
 //Tasks
 var typeColumn = "A";
@@ -106,6 +106,7 @@ function onEdit(e) {
 
   if (shouldResetDashboard()) {
     var data = getTodaysData();
+
     populateDataSheet(data);
     var auxiliarData = getAuxiliarData();
     populateAuxiliarDataSheet(auxiliarData);
@@ -287,16 +288,16 @@ function populateDataSheet(data) {
   var notes = data[notesKey];
   var tasksSum = data[tasksSumKey];
 
-  dataSheet.getRange(dateColumn + row).setValue(getTodaysDate());
-  dataSheet.getRange(leftColumn + row).setValue(tasksLeft);
-  dataSheet.getRange(doneColumn + row).setValue(done);
-  dataSheet.getRange(percentageColumn + row).setValue(percentage);
-  dataSheet.getRange(notesColumn + row).setValue(notes);
-  dataSheet.getRange(tasksSumColumn + row).setValue(tasksSum);
+  dataSheet.getRange(dataDateColumn + row).setValue(getTodaysDate());
+  dataSheet.getRange(dataLeftColumn + row).setValue(tasksLeft);
+  dataSheet.getRange(dataDoneColumn + row).setValue(done);
+  dataSheet.getRange(dataPercentageColumn + row).setValue(percentage);
+  dataSheet.getRange(dataNotesColumn + row).setValue(notes);
+  dataSheet.getRange(dataTasksSumColumn + row).setValue(tasksSum);
 }
 
 function getTodaysData() {
-  dashboardSheet = getCurrentSheet().getSheetByName(dashboardSheetName);
+  var dashboardSheet = getCurrentSheet().getSheetByName(dashboardSheetName);
 
   var tasksLeft = getStringOnSheetForPos(
     dashboardSheet,
